@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MOVEMENT LIFE Studio · 자세 분석 신청</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { margin: 0; padding: 0; background: #ffffff; font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; word-break: keep-all; overflow-wrap: anywhere; }
+  * { box-sizing: border-box; }
+  button, input, select, textarea { font-family: inherit; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #185fa5; outline-offset: -1px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const colors = {
+  bgPrimary: "#ffffff", bgSecondary: "#f5f5f0", bgInfo: "#e6f1fb", bgSuccess: "#eaf3de",
+  bgWarning: "#faeeda", bgDanger: "#fcebeb", bgNeutral: "#f0eee6",
+  textPrimary: "#1a1a18", textSecondary: "#6b6b65", textInfo: "#185fa5",
+  textSuccess: "#3b6d11", textWarning: "#854f0b", textDanger: "#a32d2d",
+  borderTertiary: "rgba(0,0,0,0.12)", borderInfo: "#85b7eb", borderSuccess: "#97c459",
+  borderWarning: "#ef9f27", borderDanger: "#f09595", borderNeutral: "#c8c4b3",
+};
+const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif";
+
+const S = {
+  page: { background: colors.bgPrimary, color: colors.textPrimary, fontFamily: font, lineHeight: 1.65, minHeight: "100vh", WebkitFontSmoothing: "antialiased", wordBreak: "keep-all", overflowWrap: "anywhere" },
+  container: { maxWidth: 740, margin: "0 auto", padding: "2rem 1.5rem" },
+  card: { background: colors.bgSecondary, border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 12, padding: "1rem 1.25rem" },
+  label: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: colors.textSecondary, fontWeight: 600, margin: 0 },
+  section: { marginTop: "2.5rem" },
+  h1: { fontSize: 22, fontWeight: 700, margin: "0.3rem 0 1rem", letterSpacing: "-0.01em" },
+  body: { fontSize: 14, margin: "0 0 0.75rem" },
+  subtle: { fontSize: 12, color: colors.textSecondary, margin: "0 0 0.75rem" },
+  divider: { height: 1, background: colors.borderTertiary, margin: "2rem 0", border: "none" },
+  fieldLabel: { fontSize: 13, fontWeight: 600, marginBottom: 6, display: "block", color: colors.textPrimary },
+  fieldRequired: { color: colors.textDanger, marginLeft: 2 },
+  fieldHelp: { fontSize: 11, color: colors.textSecondary, marginTop: 4, lineHeight: 1.4 },
+  input: { width: "100%", fontSize: 14, padding: "0.6rem 0.8rem", border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 8, background: colors.bgPrimary, color: colors.textPrimary, fontFamily: font },
+  select: { width: "100%", fontSize: 14, padding: "0.6rem 0.8rem", border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 8, background: colors.bgPrimary, color: colors.textPrimary, fontFamily: font, appearance: "auto" },
+  textarea: { width: "100%", fontSize: 14, padding: "0.6rem 0.8rem", border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 8, background: colors.bgPrimary, color: colors.textPrimary, fontFamily: font, minHeight: 80, resize: "vertical" },
+  fieldRow: { marginBottom: "1.1rem" },
+  fieldGrid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.1rem", marginBottom: "1.1rem" },
+  btnPrimary: { fontFamily: font, fontSize: 15, fontWeight: 700, border: `none`, background: colors.textInfo, color: colors.bgPrimary, borderRadius: 999, padding: "0.95rem 1.6rem", cursor: "pointer", width: "100%", boxShadow: "0 2px 10px rgba(24, 95, 165, 0.25)" },
+  btnSecondary: { fontFamily: font, fontSize: 13, fontWeight: 600, border: `0.5px solid ${colors.borderTertiary}`, background: colors.bgPrimary, color: colors.textPrimary, borderRadius: 20, padding: "0.55rem 1.1rem", cursor: "pointer" },
+  btnGhost: { fontFamily: font, fontSize: 13, fontWeight: 600, border: `0.5px solid ${colors.borderTertiary}`, background: "transparent", color: colors.textSecondary, borderRadius: 20, padding: "0.55rem 1.1rem", cursor: "pointer" },
+  toast: { position: "fixed", left: "50%", bottom: "2rem", transform: "translateX(-50%)", background: colors.textPrimary, color: colors.bgPrimary, padding: "0.7rem 1.2rem", borderRadius: 999, fontSize: 14, boxShadow: "0 6px 24px rgba(0,0,0,0.15)", zIndex: 999, fontWeight: 600 },
+};
+
+const leftAccent = (border, bg) => ({ borderLeft: `3px solid ${border}`, background: bg, borderRadius: 8, padding: "0.9rem 1rem" });
+
+const initialForm = {
+  name: "",
+  age: "",
+  gender: "",
+  job: "",
+  contact: "",
+  photoSent: false,
+  inbodySent: false,
+  sittingHours: "",
+  overtime: "",
+  bagShoulder: "",
+  exerciseFreq: "",
+  phoneHours: "",
+  sleepHours: "",
+  stress: "",
+  pregnancy: "",
+  painArea: "",
+  lifestyleMemo: "",
+};
+
+function StudioIntake() {
+  const [form, setForm] = useState(initialForm);
+  const [toast, setToast] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
+  const update = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const toggle = (key) => () => setForm({ ...form, [key]: !form[key] });
+
+  // 필수 필드 체크
+  const requiredFields = ["name", "age", "gender", "job", "contact", "sittingHours", "overtime", "bagShoulder", "exerciseFreq", "stress", "painArea"];
+  const missing = useMemo(() => requiredFields.filter(k => !String(form[k]).trim()), [form]);
+  const canSubmit = missing.length === 0;
+
+  // 정리된 텍스트 생성
+  const buildSummary = () => {
+    return `[MOVEMENT LIFE 자세 분석 신청]
+
+▶ 기본 정보
+이름: ${form.name}
+나이: ${form.age}세
+성별: ${form.gender}
+직업: ${form.job}
+연락처: ${form.contact}
+
+▶ 사진·인바디
+사진 3장 (정면·측면·후면): ${form.photoSent ? "인스타 DM으로 전송 예정/완료" : "미전송"}
+인바디 PDF: ${form.inbodySent ? "인스타 DM으로 전송 예정/완료" : "없음"}
+
+▶ 라이프스타일 설문
+좌식 시간: ${form.sittingHours}시간/일
+야근 빈도: ${form.overtime}
+가방 어깨: ${form.bagShoulder}
+운동 빈도: ${form.exerciseFreq}
+핸드폰 사용: ${form.phoneHours || "—"}시간/일
+수면 시간: ${form.sleepHours || "—"}시간/일
+스트레스 수준: ${form.stress}/10
+출산 이력: ${form.pregnancy || "—"}
+
+▶ 통증·메모
+통증 부위: ${form.painArea}
+라이프스타일 메모: ${form.lifestyleMemo || "—"}
+
+— 신청 일시: ${new Date().toLocaleString("ko-KR")}
+— MOVEMENT LIFE Studio · 어미선 (@eo_149_cm)`;
+  };
+
+  const fallbackCopy = (text) => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); showToast("신청 내용이 복사되었습니다"); }
+    catch (e) { showToast("복사 실패 — 길게 눌러서 복사해주세요"); }
+    document.body.removeChild(ta);
+  };
+
+  const handleSubmit = () => {
+    if (!canSubmit) {
+      const fieldNames = {
+        name: "이름", age: "나이", gender: "성별", job: "직업", contact: "연락처",
+        sittingHours: "좌식 시간", overtime: "야근 빈도", bagShoulder: "가방 어깨",
+        exerciseFreq: "운동 빈도", stress: "스트레스", painArea: "통증 부위"
+      };
+      const missingNames = missing.map(k => fieldNames[k]).join(", ");
+      showToast(`필수 항목을 채워주세요: ${missingNames}`);
+      return;
+    }
+    const summary = buildSummary();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(summary).then(
+        () => { showToast("신청 내용이 복사되었습니다"); setSubmitted(true); },
+        () => fallbackCopy(summary)
+      );
+    } else {
+      fallbackCopy(summary);
+      setSubmitted(true);
+    }
+  };
+
+  const openInstagram = () => {
+    window.open("https://www.instagram.com/eo_149_cm/", "_blank");
+  };
+
+  const resetForm = () => {
+    if (window.confirm("작성한 내용을 모두 지우고 처음부터 다시 작성할까요?")) {
+      setForm(initialForm);
+      setSubmitted(false);
+    }
+  };
+
+  return (
+    <div style={S.page}>
+      <div style={S.container}>
+        {/* === 헤더 === */}
+        <p style={S.label}>MOVEMENT LIFE Studio · 자세 분석 신청</p>
+        <h1 style={{ fontSize: "clamp(34px, 6vw, 48px)", fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0.75rem 0 1rem" }}>
+          당신의 몸을<br />
+          <span style={{color: colors.textInfo}}>자세히 살펴봅니다.</span>
+        </h1>
+        <p style={{ fontSize: 16, lineHeight: 1.5, color: colors.textSecondary, margin: "0 0 0.5rem" }}>
+          이 신청서를 작성하고 사진 3장을 인스타 DM으로 보내주시면, <strong>24시간 안에 자세 분석 결과지를 카톡으로 받아보실 수 있어요.</strong>
+        </p>
+        <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0 }}>분석 신청은 무료. 결과지에는 자세 패턴 4가지 + 일반화 4주 운동 프로그램이 들어갑니다.</p>
+
+        {/* === 3단 워크플로 안내 === */}
+        <section style={S.section}>
+          <p style={S.label}>진행 방식</p>
+          <h2 style={S.h1}>이렇게 진행돼요 (3단계)</h2>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={leftAccent(colors.borderInfo, colors.bgInfo)}>
+              <p style={{...S.label, color: colors.textInfo, marginBottom: 4}}>STEP 1 · 신청서 작성 (3분)</p>
+              <p style={{ fontSize: 13, margin: 0 }}>아래 폼 작성 → "내 정보 미선 강사에게 보내기" 버튼 → 자동으로 정리된 내용이 클립보드에 복사됩니다.</p>
+            </div>
+            <div style={leftAccent(colors.borderWarning, colors.bgWarning)}>
+              <p style={{...S.label, color: colors.textWarning, marginBottom: 4}}>STEP 2 · 인스타 DM 전송 (1분)</p>
+              <p style={{ fontSize: 13, margin: 0 }}>미선 강사 인스타(@eo_149_cm)로 들어가서 — ① 복사된 신청 내용 붙여넣기, ② 사진 3장(정면·측면·후면) 첨부, ③ 인바디 결과지 있으면 PDF 첨부.</p>
+            </div>
+            <div style={leftAccent(colors.borderSuccess, colors.bgSuccess)}>
+              <p style={{...S.label, color: colors.textSuccess, marginBottom: 4}}>STEP 3 · 24시간 안에 결과지 수신</p>
+              <p style={{ fontSize: 13, margin: 0 }}>미선 강사가 검수 후 자세 분석 결과지를 카카오톡으로 보내드립니다. 자세 패턴 4가지 + 4주 운동 프로그램 + 환경별 변형.</p>
+            </div>
+          </div>
+        </section>
+
+        <hr style={S.divider} />
+
+        {/* === A. 기본 정보 === */}
+        <section style={S.section}>
+          <p style={S.label}>A · 기본 정보</p>
+          <h2 style={S.h1}>회원님에 대해 알려주세요</h2>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>이름 / 별명<span style={S.fieldRequired}>*</span></label>
+              <input style={S.input} type="text" value={form.name} onChange={update("name")} placeholder="예: 김미선 또는 별명" />
+            </div>
+            <div>
+              <label style={S.fieldLabel}>나이<span style={S.fieldRequired}>*</span></label>
+              <input style={S.input} type="number" value={form.age} onChange={update("age")} placeholder="만 나이" min="10" max="100" />
+            </div>
+          </div>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>성별<span style={S.fieldRequired}>*</span></label>
+              <select style={S.select} value={form.gender} onChange={update("gender")}>
+                <option value="">선택해주세요</option>
+                <option value="여성">여성</option>
+                <option value="남성">남성</option>
+                <option value="기타">기타·답변 안 함</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.fieldLabel}>연락처 (카톡 ID 또는 휴대폰)<span style={S.fieldRequired}>*</span></label>
+              <input style={S.input} type="text" value={form.contact} onChange={update("contact")} placeholder="예: kakao_id 또는 010-1234-5678" />
+            </div>
+          </div>
+
+          <div style={S.fieldRow}>
+            <label style={S.fieldLabel}>직업 / 하시는 일<span style={S.fieldRequired}>*</span></label>
+            <input style={S.input} type="text" value={form.job} onChange={update("job")} placeholder="예: 초등학교 교사 13년차 / UI 디자이너 / 간호사 / 주부 등 — 구체적일수록 좋아요" />
+            <p style={S.fieldHelp}>※ 직업이 자세 패턴 예측의 핵심 단서예요. 좌식·편측·반복·중량 등 어떤 카테고리에 속하는지 자동 분류됩니다.</p>
+          </div>
+        </section>
+
+        {/* === B. 사진·인바디 안내 === */}
+        <section style={S.section}>
+          <p style={S.label}>B · 사진 + 인바디 (인스타 DM으로 별도 전송)</p>
+          <h2 style={S.h1}>사진 3장과 인바디는 인스타로</h2>
+
+          <div style={{...leftAccent(colors.borderWarning, colors.bgWarning), marginTop: "0.6rem"}}>
+            <p style={{...S.label, color: colors.textWarning, marginBottom: 6}}>왜 인스타 DM인가요?</p>
+            <p style={{ fontSize: 13, margin: 0, lineHeight: 1.6 }}>사진·인바디는 이 신청서가 아니라 인스타 DM으로 받습니다. 회원님 사진이 안전하게 미선 강사에게만 전달되도록.</p>
+          </div>
+
+          <div style={{...S.card, marginTop: "0.8rem"}}>
+            <p style={{...S.label, marginBottom: 8}}>사진 촬영 가이드</p>
+            <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: 13, lineHeight: 1.7 }}>
+              <li><strong>정면</strong> — 정면을 바라보고 차렷 자세. 어깨·골반 라인이 보이게.</li>
+              <li><strong>측면</strong> — 90° 옆모습. 머리·어깨·골반·발목 한 라인이 보이게.</li>
+              <li><strong>후면</strong> — 등을 보이고 차렷 자세. 어깨·골반 좌우 대칭이 보이게.</li>
+            </ul>
+            <p style={{ fontSize: 12, color: colors.textSecondary, marginTop: 10, lineHeight: 1.5 }}>※ 운동복 또는 몸 라인이 잘 보이는 옷. 머리는 정수리 묶기. 맨발. 흰 벽 앞이 가장 좋아요.</p>
+          </div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: "1rem" }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "0.8rem 1rem", border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 8, background: form.photoSent ? colors.bgSuccess : colors.bgPrimary }}>
+              <input type="checkbox" checked={form.photoSent} onChange={toggle("photoSent")} style={{ marginTop: 3, width: 18, height: 18 }} />
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>사진 3장을 인스타 DM으로 보내드릴게요</p>
+                <p style={{ fontSize: 12, color: colors.textSecondary, margin: "4px 0 0" }}>(나중에 보내도 OK — 일단 체크하고 신청서 먼저 전송 가능)</p>
+              </div>
+            </label>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "0.8rem 1rem", border: `0.5px solid ${colors.borderTertiary}`, borderRadius: 8, background: form.inbodySent ? colors.bgSuccess : colors.bgPrimary }}>
+              <input type="checkbox" checked={form.inbodySent} onChange={toggle("inbodySent")} style={{ marginTop: 3, width: 18, height: 18 }} />
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>인바디 결과지도 함께 보내드릴게요 (선택)</p>
+                <p style={{ fontSize: 12, color: colors.textSecondary, margin: "4px 0 0" }}>최근 3개월 이내 인바디 PDF·사진. 없으면 건너뛰기.</p>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        {/* === C. 라이프스타일 설문 === */}
+        <section style={S.section}>
+          <p style={S.label}>C · 라이프스타일 설문</p>
+          <h2 style={S.h1}>하루를 어떻게 보내시나요?</h2>
+          <p style={S.body}>회원님의 자세 패턴을 만든 시간·습관을 알려주세요. 분석 결과지에 직접 반영됩니다.</p>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>좌식 시간 (시간/일)<span style={S.fieldRequired}>*</span></label>
+              <input style={S.input} type="number" value={form.sittingHours} onChange={update("sittingHours")} placeholder="예: 7" min="0" max="24" step="0.5" />
+              <p style={S.fieldHelp}>업무·식사·이동 포함 앉아있는 총 시간</p>
+            </div>
+            <div>
+              <label style={S.fieldLabel}>야근 빈도<span style={S.fieldRequired}>*</span></label>
+              <select style={S.select} value={form.overtime} onChange={update("overtime")}>
+                <option value="">선택해주세요</option>
+                <option value="거의 없음">거의 없음</option>
+                <option value="주 1~2회">주 1~2회</option>
+                <option value="주 3~5회">주 3~5회</option>
+                <option value="매일">매일</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>가방을 주로 메는 어깨<span style={S.fieldRequired}>*</span></label>
+              <select style={S.select} value={form.bagShoulder} onChange={update("bagShoulder")}>
+                <option value="">선택해주세요</option>
+                <option value="양쪽 균등">양쪽 균등 (백팩 또는 번갈아)</option>
+                <option value="좌측 위주">좌측 위주</option>
+                <option value="우측 위주">우측 위주</option>
+                <option value="가방 거의 안 듦">가방 거의 안 듦</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.fieldLabel}>운동 빈도 (PT 제외)<span style={S.fieldRequired}>*</span></label>
+              <select style={S.select} value={form.exerciseFreq} onChange={update("exerciseFreq")}>
+                <option value="">선택해주세요</option>
+                <option value="주 0회">주 0회 (전혀 안 함)</option>
+                <option value="주 1~2회">주 1~2회</option>
+                <option value="주 3~5회">주 3~5회</option>
+                <option value="매일">매일</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>핸드폰 사용 (시간/일)</label>
+              <input style={S.input} type="number" value={form.phoneHours} onChange={update("phoneHours")} placeholder="예: 4" min="0" max="24" step="0.5" />
+              <p style={S.fieldHelp}>업무 외 SNS·메신저·영상 시청 시간</p>
+            </div>
+            <div>
+              <label style={S.fieldLabel}>수면 시간 (시간/일)</label>
+              <input style={S.input} type="number" value={form.sleepHours} onChange={update("sleepHours")} placeholder="예: 6" min="0" max="14" step="0.5" />
+              <p style={S.fieldHelp}>평일 평균</p>
+            </div>
+          </div>
+
+          <div style={S.fieldGrid2}>
+            <div>
+              <label style={S.fieldLabel}>스트레스 수준 (1~10)<span style={S.fieldRequired}>*</span></label>
+              <select style={S.select} value={form.stress} onChange={update("stress")}>
+                <option value="">선택해주세요</option>
+                <option value="1">1 (전혀 없음)</option>
+                <option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5 (보통)</option>
+                <option value="6">6</option><option value="7">7</option>
+                <option value="8">8</option><option value="9">9</option>
+                <option value="10">10 (극심함)</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.fieldLabel}>출산 이력 (여성)</label>
+              <select style={S.select} value={form.pregnancy} onChange={update("pregnancy")}>
+                <option value="">선택해주세요 (남성·미답 시 비워두기)</option>
+                <option value="없음">없음</option>
+                <option value="1회 (1년 이내)">1회 (1년 이내)</option>
+                <option value="1회 (1년 이상)">1회 (1년 이상)</option>
+                <option value="2회 이상">2회 이상</option>
+              </select>
+              <p style={S.fieldHelp}>골반·코어 평가 우선순위 결정용</p>
+            </div>
+          </div>
+
+          <div style={S.fieldRow}>
+            <label style={S.fieldLabel}>통증 부위<span style={S.fieldRequired}>*</span></label>
+            <input style={S.input} type="text" value={form.painArea} onChange={update("painArea")} placeholder="예: 목, 어깨, 허리 / 또는 '없음'" />
+            <p style={S.fieldHelp}>여러 부위 가능 — 쉼표로 구분. 통증 없으면 "없음" 입력.</p>
+          </div>
+
+          <div style={S.fieldRow}>
+            <label style={S.fieldLabel}>라이프스타일 메모 (자유)</label>
+            <textarea style={S.textarea} value={form.lifestyleMemo} onChange={update("lifestyleMemo")} placeholder="평소 자세·통증·궁금한 점 자유롭게. 예: '쉬는 날에도 학부모 톡이 와요. 머리가 항상 무거워요.'" />
+            <p style={S.fieldHelp}>회원님의 일상을 짧게라도 알려주시면 결과지가 훨씬 정확해져요.</p>
+          </div>
+        </section>
+
+        <hr style={S.divider} />
+
+        {/* === 전송 버튼 === */}
+        <section style={{...S.section, marginTop: "1.5rem"}}>
+          {!submitted ? (
+            <>
+              {missing.length > 0 && (
+                <div style={{...leftAccent(colors.borderDanger, colors.bgDanger), marginBottom: "1rem"}}>
+                  <p style={{ fontSize: 13, margin: 0 }}><strong>필수 항목 {missing.length}개</strong>가 비어있어요. 다 채워야 전송됩니다.</p>
+                </div>
+              )}
+              <button style={{...S.btnPrimary, opacity: canSubmit ? 1 : 0.5}} onClick={handleSubmit}>
+                내 정보 미선 강사에게 보내기 →
+              </button>
+              <p style={{ fontSize: 12, color: colors.textSecondary, marginTop: 10, textAlign: "center" }}>버튼 누르면 정리된 내용이 클립보드에 복사됩니다. 그다음 인스타 DM에 붙여넣어 전송해주세요.</p>
+            </>
+          ) : (
+            <div style={{...leftAccent(colors.borderSuccess, colors.bgSuccess), marginBottom: "1rem"}}>
+              <p style={{...S.label, color: colors.textSuccess, marginBottom: 6}}>✓ 신청 내용이 클립보드에 복사되었습니다</p>
+              <p style={{ fontSize: 13, margin: "0 0 0.8rem", lineHeight: 1.6 }}>이제 인스타 DM(@eo_149_cm)으로 들어가서:<br />
+                ① 복사된 신청 내용 <strong>붙여넣기</strong><br />
+                ② <strong>사진 3장</strong>(정면·측면·후면) 첨부<br />
+                ③ 인바디 PDF가 있으면 함께 첨부<br />
+                ④ 전송!</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button style={S.btnPrimary} onClick={openInstagram}>인스타 DM 열기 (@eo_149_cm) →</button>
+              </div>
+              <button style={{...S.btnGhost, marginTop: 10}} onClick={resetForm}>처음부터 다시 작성</button>
+            </div>
+          )}
+        </section>
+
+        <hr style={S.divider} />
+
+        {/* === 푸터 === */}
+        <section style={{ marginTop: "1.5rem", marginBottom: "3rem" }}>
+          <p style={S.label}>MOVEMENT LIFE에 대해</p>
+          <h2 style={{ fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.02em", margin: "0.5rem 0 1rem" }}>
+            149cm 트레이너가 만든<br />
+            <span style={{color: colors.textInfo}}>자세 분석 시스템</span>
+          </h2>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: colors.textSecondary, margin: "0 0 0.8rem" }}>
+            어미선(@eo_149_cm) · 11세 요가 시작 → 역사학 대학원 수료 → 트레이너 13년차. 어텐션짐(경남 마산 합성동) 강사. 작은 키·짧은 팔다리로 살아오면서 깨달은 게 있어요 — 사람마다 몸이 다르고, 같은 운동이 다른 결과를 만든다는 것.
+          </p>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: colors.textSecondary, margin: 0 }}>
+            그래서 MOVEMENT LIFE는 회원님의 직업·라이프스타일·측정값을 기반으로 <strong>회원님만의 자세 패턴 4가지를 도출하고, 그에 맞는 운동 처방을 자동으로 만드는 시스템</strong>입니다. 정형화된 PT가 아니라, 회원 한 명의 몸에 맞춘 결과지.
+          </p>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: "1.2rem" }}>
+            <button style={S.btnSecondary} onClick={openInstagram}>인스타 @eo_149_cm</button>
+            <a href="https://www.instagram.com/strong_petite_climber/" target="_blank" rel="noopener noreferrer" style={{...S.btnSecondary, textDecoration: "none", display: "inline-block"}}>클라이밍 @strong_petite_climber</a>
+          </div>
+
+          <p style={{ fontSize: 11, color: colors.textSecondary, marginTop: "1.5rem", lineHeight: 1.5 }}>
+            ※ 본 결과지는 의료 진단이 아니며, 일반 운동 지도 목적의 자세 분석입니다. 의료적 통증이 지속되시면 전문 의료기관에 먼저 방문해주세요.
+          </p>
+        </section>
+      </div>
+
+      {toast && (<div style={S.toast} role="status" aria-live="polite">{toast}</div>)}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<StudioIntake />);
+</script>
+</body>
+</html>
